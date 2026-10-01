@@ -171,13 +171,17 @@ bzl_library(
 """)
     rctx.file(
         "version.bzl",
-        "LLVM_VERSION = {}\n".format(repr(rctx.attr.llvm_version)),
+        "LLVM_VERSION = {}\nFASTBUILD_COMPILE_FLAGS = {}\n".format(
+            repr(rctx.attr.llvm_version),
+            repr(rctx.attr.fastbuild_compile_flags),
+        ),
     )
     return rctx.repo_metadata(reproducible = True)
 
 _llvm_version_repository = repository_rule(
     implementation = _llvm_version_repository_impl,
     attrs = {
+        "fastbuild_compile_flags": attr.string_list_dict(default = {}),
         "llvm_version": attr.string(mandatory = True),
     },
 )
@@ -223,12 +227,23 @@ def _get_llvm_targets(mctx):
                 targets[target] = None
     return targets.keys()
 
+def _get_fastbuild_compile_flags(mctx):
+    flags = {}
+    for module in mctx.modules:
+        for tag in module.tags.version + module.tags.configure:
+            if tag.fastbuild_compile_flags:
+                if getattr(module, "is_root", False):
+                    return tag.fastbuild_compile_flags
+                flags = tag.fastbuild_compile_flags
+    return flags
+
 def _llvm_impl(mctx):
     llvm_version = _get_llvm_version(mctx)
     llvm_version_index = _get_llvm_version_index(mctx)
 
     _llvm_version_repository(
         name = "llvm_version",
+        fastbuild_compile_flags = _get_fastbuild_compile_flags(mctx),
         llvm_version = llvm_version,
     )
     _create_llvm_project_repository(mctx, llvm_version, llvm_version_index, _get_llvm_targets(mctx))
@@ -241,12 +256,14 @@ def _llvm_impl(mctx):
 
 _version_tag = tag_class(
     attrs = {
+        "fastbuild_compile_flags": attr.string_list_dict(default = {}),
         "llvm_version": attr.string(mandatory = True),
     },
 )
 
 _configure_tag = tag_class(
     attrs = {
+        "fastbuild_compile_flags": attr.string_list_dict(default = {}),
         "targets": attr.string_list(mandatory = True),
     },
 )
