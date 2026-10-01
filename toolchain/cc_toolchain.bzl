@@ -23,6 +23,7 @@ def cc_toolchain(
             "@llvm//toolchain/features:external_include_paths",
             "@llvm//toolchain/features:generate_pdb_file",
             "@llvm//toolchain/features:no_windows_export_all_symbols",
+            "@llvm//toolchain/features:skip_virtual_includes",
             "@llvm//toolchain/features:static_link_cpp_runtimes",
             "@llvm//toolchain/features:targets_windows",
             "@llvm//toolchain/features:thin_lto_linkstatic_tests_use_shared_nonlto_backends",
@@ -104,6 +105,7 @@ def cc_toolchain(
             "@llvm//toolchain/features:external_include_paths",
             "@llvm//toolchain/features:generate_pdb_file",
             "@llvm//toolchain/features:fdo_optimize",
+            "@llvm//toolchain/features:skip_virtual_includes",
             "@rules_cc//cc/toolchains/args/thin_lto:feature",
             "@llvm//toolchain/features:thin_lto_linkstatic_tests_use_shared_nonlto_backends",
             "@llvm//toolchain/features:thin_lto_all_linkstatic_use_shared_nonlto_backends",
@@ -197,14 +199,17 @@ def cc_toolchain(
             "@llvm//toolchain:runtimes_none": [
                 "@llvm//toolchain/features:external_include_paths",
                 "@llvm//toolchain/features:fdo_optimize",
+                "@llvm//toolchain/features:skip_virtual_includes",
             ],
             "@llvm//toolchain:runtimes_stage1": [
                 "@llvm//toolchain/features:external_include_paths",
                 "@llvm//toolchain/features:fdo_optimize",
+                "@llvm//toolchain/features:skip_virtual_includes",
             ],
             "@llvm//toolchain:runtimes_stage1_hosted": [
                 "@llvm//toolchain/features:external_include_paths",
                 "@llvm//toolchain/features:fdo_optimize",
+                "@llvm//toolchain/features:skip_virtual_includes",
             ],
             "//conditions:default": [name + "_generic_known_features"],
         }),
