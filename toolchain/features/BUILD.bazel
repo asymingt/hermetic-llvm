@@ -1,5 +1,4 @@
 load("@bazel_skylib//lib:selects.bzl", "selects")
-load("@llvm_version//:version.bzl", "FASTBUILD_COMPILE_FLAGS")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:feature.bzl", "cc_feature")
 load("@rules_cc//cc/toolchains:feature_set.bzl", "cc_feature_set")
@@ -388,12 +387,48 @@ cc_feature(
 )
 
 cc_args(
-    name = "fastbuild_compile_flags",
+    name = "fastbuild_optimization_level_o1",
     actions = _CONFIGURATION_COMPILE_ACTIONS,
     args = select({
-        "//platforms/config:" + target.replace("-", "_"): flags
-        for target, flags in FASTBUILD_COMPILE_FLAGS.items()
-    } | {
+        "//constraints/windows/abi:msvc": ["/clang:-O1"],
+        "//conditions:default": ["-O1"],
+    }),
+)
+
+cc_args(
+    name = "fastbuild_optimization_level_o2",
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
+    args = select({
+        "//constraints/windows/abi:msvc": ["/O2"],
+        "//conditions:default": ["-O2"],
+    }),
+)
+
+cc_args(
+    name = "fastbuild_optimization_level_os",
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
+    args = select({
+        "//constraints/windows/abi:msvc": ["/O1"],
+        "//conditions:default": ["-Os"],
+    }),
+)
+
+cc_args(
+    name = "fastbuild_optimization_level_oz",
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
+    args = select({
+        "//constraints/windows/abi:msvc": ["/clang:-Oz"],
+        "//conditions:default": ["-Oz"],
+    }),
+)
+
+cc_args_list(
+    name = "fastbuild_compile_flags",
+    args = select({
+        "//config:fastbuild_optimization_mode_O1": [":fastbuild_optimization_level_o1"],
+        "//config:fastbuild_optimization_mode_O2": [":fastbuild_optimization_level_o2"],
+        "//config:fastbuild_optimization_mode_Os": [":fastbuild_optimization_level_os"],
+        "//config:fastbuild_optimization_mode_Oz": [":fastbuild_optimization_level_oz"],
         "//conditions:default": [],
     }),
 )
