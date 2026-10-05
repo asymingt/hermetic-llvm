@@ -10,6 +10,8 @@ FASTBUILD_OPTIMIZATION_MODES = [
     "O0",
     "O1",
     "O2",
+    "O3",
+    "Og",
     "Os",
     "Oz",
 ]

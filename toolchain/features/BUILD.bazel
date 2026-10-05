@@ -405,6 +405,24 @@ cc_args(
 )
 
 cc_args(
+    name = "fastbuild_optimization_level_o3",
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
+    args = select({
+        "//constraints/windows/abi:msvc": ["/clang:-O3"],
+        "//conditions:default": ["-O3"],
+    }),
+)
+
+cc_args(
+    name = "fastbuild_optimization_level_og",
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
+    args = select({
+        "//constraints/windows/abi:msvc": ["/clang:-Og"],
+        "//conditions:default": ["-Og"],
+    }),
+)
+
+cc_args(
     name = "fastbuild_optimization_level_os",
     actions = _CONFIGURATION_COMPILE_ACTIONS,
     args = select({
@@ -427,6 +445,8 @@ cc_args_list(
     args = select({
         "//config:fastbuild_optimization_mode_O1": [":fastbuild_optimization_level_o1"],
         "//config:fastbuild_optimization_mode_O2": [":fastbuild_optimization_level_o2"],
+        "//config:fastbuild_optimization_mode_O3": [":fastbuild_optimization_level_o3"],
+        "//config:fastbuild_optimization_mode_Og": [":fastbuild_optimization_level_og"],
         "//config:fastbuild_optimization_mode_Os": [":fastbuild_optimization_level_os"],
         "//config:fastbuild_optimization_mode_Oz": [":fastbuild_optimization_level_oz"],
         "//conditions:default": [],
