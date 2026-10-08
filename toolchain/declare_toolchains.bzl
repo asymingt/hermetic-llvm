@@ -36,7 +36,10 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
             module_map = platform_module_map(exec_os, exec_cpu),
             # Paths below describe the concrete execution filesystem. Keep
             # target semantics in //toolchain's ordered argument composition.
-            extra_args = [cc_toolchain_name + "_resource_directory_args"] + select({
+            extra_args = select({
+                "@platforms//os:uefi": [],
+                "//conditions:default": [cc_toolchain_name + "_resource_directory_args"],
+            }) + select({
                 "@llvm//platforms/config:windows_x86_64_msvc": [
                     "@llvm//toolchain/args/windows/msvc:normalized_default_libs_for_runtime",
                     "@llvm//toolchain/args/windows/msvc:normalized_sdk_compile_args",

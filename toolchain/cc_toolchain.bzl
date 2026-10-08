@@ -23,6 +23,7 @@ def cc_toolchain(
             "@llvm//toolchain/features:external_include_paths",
             "@llvm//toolchain/features:generate_pdb_file",
             "@llvm//toolchain/features:no_windows_export_all_symbols",
+            "@llvm//toolchain/features:skip_virtual_includes",
             "@llvm//toolchain/features:static_link_cpp_runtimes",
             "@llvm//toolchain/features:targets_windows",
             "@llvm//toolchain/features:thin_lto_linkstatic_tests_use_shared_nonlto_backends",
@@ -104,6 +105,7 @@ def cc_toolchain(
             "@llvm//toolchain/features:external_include_paths",
             "@llvm//toolchain/features:generate_pdb_file",
             "@llvm//toolchain/features:fdo_optimize",
+            "@llvm//toolchain/features:skip_virtual_includes",
             "@rules_cc//cc/toolchains/args/thin_lto:feature",
             "@llvm//toolchain/features:thin_lto_linkstatic_tests_use_shared_nonlto_backends",
             "@llvm//toolchain/features:thin_lto_all_linkstatic_use_shared_nonlto_backends",
@@ -156,6 +158,7 @@ def cc_toolchain(
                 "@rules_cc//cc/toolchains/args/def_file:def_file",
                 "@llvm//toolchain/features:targets_windows",
             ],
+            "@platforms//os:uefi": [],
             "@platforms//os:none": [],
         }) + [
             "@llvm//toolchain/features:prefer_pic_for_opt_binaries",
@@ -197,14 +200,17 @@ def cc_toolchain(
             "@llvm//toolchain:runtimes_none": [
                 "@llvm//toolchain/features:external_include_paths",
                 "@llvm//toolchain/features:fdo_optimize",
+                "@llvm//toolchain/features:skip_virtual_includes",
             ],
             "@llvm//toolchain:runtimes_stage1": [
                 "@llvm//toolchain/features:external_include_paths",
                 "@llvm//toolchain/features:fdo_optimize",
+                "@llvm//toolchain/features:skip_virtual_includes",
             ],
             "@llvm//toolchain:runtimes_stage1_hosted": [
                 "@llvm//toolchain/features:external_include_paths",
                 "@llvm//toolchain/features:fdo_optimize",
+                "@llvm//toolchain/features:skip_virtual_includes",
             ],
             "//conditions:default": [name + "_generic_known_features"],
         }),
@@ -223,6 +229,7 @@ def cc_toolchain(
     cc_feature_set(
         name = name + "_selected_known_features",
         all_of = select({
+            "@platforms//os:uefi": ["@llvm//toolchain/features/legacy:uefi_legacy_replacements"],
             "@llvm//constraints/windows/abi:msvc": [name + "_msvc_known_features"],
             "//conditions:default": [name + "_generic_selected_known_features"],
         }),
@@ -231,6 +238,7 @@ def cc_toolchain(
     cc_feature_set(
         name = name + "_selected_enabled_features",
         all_of = select({
+            "@platforms//os:uefi": ["@llvm//toolchain/features/legacy:uefi_legacy_replacements"],
             "@llvm//constraints/windows/abi:msvc": [name + "_msvc_selected_enabled_features"],
             "//conditions:default": [name + "_generic_selected_enabled_features"],
         }),
@@ -249,6 +257,7 @@ def cc_toolchain(
     native.alias(
         name = name + "_static_runtime_lib",
         actual = select({
+            "@platforms//os:uefi": "@llvm//runtimes:none",
             "@llvm//constraints/windows/abi:msvc": "@llvm//runtimes:none",
             "//conditions:default": name + "_generic_static_runtime_lib",
         }),
@@ -267,6 +276,7 @@ def cc_toolchain(
     native.alias(
         name = name + "_dynamic_runtime_lib",
         actual = select({
+            "@platforms//os:uefi": "@llvm//runtimes:none",
             "@llvm//constraints/windows/abi:msvc": "@llvm//runtimes:none",
             "//conditions:default": name + "_generic_dynamic_runtime_lib",
         }),
@@ -330,6 +340,7 @@ def cc_toolchain(
             "@llvm//platforms/config:windows_crt_msvcrt": "msvcrt",
             "@llvm//platforms/config:windows_crt_ucrt": "ucrt",
             "@platforms//os:macos": "macosx",
+            "@platforms//os:uefi": "none",
             "@platforms//os:none": "none",
         }, no_match_error = "Unsupported target libc"),
     )
