@@ -151,6 +151,11 @@ cc_feature(
     feature_name = "sanitize_pwd",
 )
 
+cc_feature(
+    name = "skip_virtual_includes",
+    feature_name = "skip_virtual_includes",
+)
+
 # --icf=safe is LLD/ELF-only: sanitizer runtimes forbid ICF, wasm and Windows
 # don't support it, and macOS links with ld64 (which rejects the flag). Grouped
 # via match_any so overlapping conditions (e.g. macOS + a sanitizer) don't
