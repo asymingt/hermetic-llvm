@@ -76,6 +76,12 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
     BASE_TOOLS = TOOLS_WITHOUT_LINKER | {
         "@rules_cc//cc/toolchains/actions:link_actions": prefix + "/lld",
     }
+    UEFI_TOOLS_WITHOUT_LINKER = TOOLS_WITHOUT_LINKER | {
+        "@rules_cc//cc/toolchains/actions:assembly_actions": prefix + "/uefi-clang",
+        "@rules_cc//cc/toolchains/actions:c_compile": prefix + "/uefi-clang",
+        "@rules_cc//cc/toolchains/actions:objc_compile": prefix + "/uefi-clang",
+        "@llvm//toolchain:cpp_compile_actions_without_header_parsing": prefix + "/uefi-clang++",
+    }
 
     COMPLETE_ONLY_TOOLS = {
         "@rules_cc//cc/toolchains/actions:cpp_header_parsing": prefix + "/header-parser",
@@ -128,6 +134,14 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
             "@llvm//toolchain:runtimes_all": prefix + "/complete_tools_for_msvc",
             "//conditions:default": prefix + "/construction_tools_for_msvc",
         }),
+    )
+
+    cc_tool_map(
+        name = prefix + "/uefi_tools",
+        tools = UEFI_TOOLS_WITHOUT_LINKER | COMPLETE_ONLY_TOOLS | {
+            "@rules_cc//cc/toolchains/actions:ar_actions": prefix + "/llvm-ar",
+            "@rules_cc//cc/toolchains/actions:link_actions": prefix + "/uefi-clang++",
+        },
     )
 
     cc_tool_map(
@@ -273,20 +287,29 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
         allowlist_include_directories = resource_allowlist_directories,
     )
 
-    # clang-cl discovers this raw sibling by InstalledDir. It is action data,
-    # not an independently selected rules_cc action tool.
-    bootstrap_binary(
-        name = prefix + "/bin/lld-link",
-        actual = "@llvm-project//llvm:llvm.stripped",
-        **bootstrap_binary_kwargs
-    )
-
     cc_tool(
         name = prefix + "/def-file-generator",
         src = "@llvm//tools/def_file_generator",
         data = [prefix + "/bin/llvm-nm"],
         env = {"LLVM_NM": "{llvm_nm}"},
         format = {"llvm_nm": prefix + "/bin/llvm-nm"},
+    )
+
+    cc_tool(
+        name = prefix + "/uefi-clang",
+        src = prefix + "/bin/clang",
+        data = [prefix + "/clang_resource_directory"],
+        allowlist_include_directories = resource_allowlist_directories,
+    )
+
+    cc_tool(
+        name = prefix + "/uefi-clang++",
+        src = prefix + "/bin/clang++",
+        data = [
+            prefix + "/clang_resource_directory",
+            prefix + "/bin/lld-link",
+        ],
+        allowlist_include_directories = resource_allowlist_directories,
     )
 
     bootstrap_binary(
@@ -378,6 +401,13 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
 
     bootstrap_binary(
         name = prefix + "/bin/wasm-ld",
+        actual = "@llvm-project//llvm:llvm.stripped",
+        **bootstrap_binary_kwargs
+    )
+
+    # Both Clang drivers discover this linker beside the compiler.
+    bootstrap_binary(
+        name = prefix + "/bin/lld-link",
         actual = "@llvm-project//llvm:llvm.stripped",
         **bootstrap_binary_kwargs
     )
@@ -540,7 +570,10 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
             # See https://github.com/bazelbuild/rules_cc/issues/299#issuecomment-2660340534
             cc_toolchain(
                 name = cc_toolchain_name,
-                extra_args = [cc_toolchain_name + "_resource_directory_args"] + select({
+                extra_args = select({
+                    "@platforms//os:uefi": [],
+                    "//conditions:default": [cc_toolchain_name + "_resource_directory_args"],
+                }) + select({
                     "@llvm//platforms/config:windows_x86_64_msvc": [
                         "@llvm//toolchain/args/windows/msvc:normalized_default_libs_for_runtime",
                         "@llvm//toolchain/args/windows/msvc:normalized_sdk_compile_args",
@@ -552,6 +585,7 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
                     "//conditions:default": [],
                 }),
                 tool_map = select({
+                    "@platforms//os:uefi": ":%s/uefi_tools" % tool_prefix,
                     "@llvm//platforms/config:windows_x86_64_msvc": ":%s/tools_for_msvc_for_runtime" % tool_prefix,
                     "@llvm//platforms/config:windows_aarch64_msvc": ":%s/tools_for_msvc_for_runtime" % tool_prefix,
                     "@llvm//toolchain:linux_complete": ":%s/tools_with_interface_libraries" % tool_prefix,
