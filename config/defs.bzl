@@ -128,6 +128,7 @@ def config_settings():
         name = "fastbuild_optimization_mode",
         values = FASTBUILD_OPTIMIZATION_MODES,
         build_setting_default = "O0",
+        scope = "target",
     )
 
     for optimization_mode in FASTBUILD_OPTIMIZATION_MODES:
